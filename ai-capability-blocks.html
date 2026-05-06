@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Capability SenseMaking v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090f;
+  --surface: #0d1220;
+  --surface-2: #111827;
+  --surface-3: #161f30;
+  --border: rgba(255,255,255,0.07);
+  --border-mid: rgba(255,255,255,0.12);
+  --text: #e8eeff;
+  --text-muted: rgba(232,238,255,0.5);
+  --text-dim: rgba(232,238,255,0.22);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 15% -5%, rgba(56,189,248,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 85% 105%, rgba(52,211,153,0.06) 0%, transparent 65%),
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.022) 1px, transparent 0);
+  background-size: auto, auto, 28px 28px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 64px max(28px, calc((100vw - 1200px) / 2)) 80px;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+header { margin-bottom: 52px; }
+h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(44px, 7vw, 80px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.018em;
+  margin-bottom: 20px;
+}
+.block-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.meta-pill {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid);
+  color: var(--text-dim);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meta-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── ACCORDION PIPELINE ──────────────────────── */
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+
+/* ── STAGE ───────────────────────────────────── */
+.stage {
+  border-radius: 14px;
+  border: 1px solid var(--border-mid);
+  border-left: 3px solid var(--stage-color);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.stage.open {
+  border-color: var(--stage-color);
+  box-shadow: 0 12px 40px var(--stage-glow);
+}
+
+/* ── STAGE HEADER ────────────────────────────── */
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.stage-header:hover { background: var(--surface-2); }
+.stage.open .stage-header { background: var(--surface-2); }
+
+.stage-num {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  width: 20px;
+}
+.stage-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--stage-color);
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.stage-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+.stage-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.stage-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.stage-chevron {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 12px;
+  transition: transform 0.3s ease, border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.stage.open .stage-chevron {
+  transform: rotate(180deg);
+  border-color: var(--stage-color);
+  color: var(--stage-color);
+}
+
+/* ── ACCORDION PANEL ────────────────────────── */
+.stage-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stage.open .stage-panel {
+  grid-template-rows: 1fr;
+}
+.stage-panel-inner {
+  overflow: hidden;
+}
+.stage-panel-content {
+  padding: 0 24px 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+/* ── TRIGGER SECTION ────────────────────────── */
+.trigger-wrap {
+  margin-bottom: 48px;
+}
+.trigger-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 14px;
+  border: 1px solid var(--border-mid);
+  border-left: 3px solid #A78BFA;
+  background: var(--surface);
+  transition: background 0.15s, border-color 0.2s, box-shadow 0.2s;
+}
+.trigger-header:hover { background: var(--surface-2); }
+.trigger-wrap.open .trigger-header {
+  background: var(--surface-2);
+  border-color: #A78BFA;
+  box-shadow: 0 12px 40px rgba(167,139,250,0.15);
+  border-radius: 14px 14px 0 0;
+}
+.trigger-label-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #A78BFA;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.trigger-desc-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+.trigger-chevron {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 12px;
+  transition: transform 0.3s ease, border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.trigger-wrap.open .trigger-chevron {
+  transform: rotate(180deg);
+  border-color: #A78BFA;
+  color: #A78BFA;
+}
+.trigger-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #A78BFA;
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.trigger-wrap.open .trigger-panel { grid-template-rows: 1fr; }
+.trigger-panel-inner { overflow: hidden; }
+.trigger-panel-content { padding: 24px; }
+
+/* ── CARD GRID ──────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+/* ── CARD ────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--card-color);
+  border-radius: 12px;
+  padding: 16px 14px 38px;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, background 0.18s;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.3s ease both;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, var(--card-color) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px var(--card-glow); border-color: var(--card-color); background: var(--surface-3); }
+.card:hover::after { opacity: 0.05; }
+.card:active { transform: translateY(0); }
+
+.card-phase {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--card-color);
+  margin-bottom: 8px;
+}
+.card-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.card-summary { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.card-cta { position: absolute; bottom: 12px; right: 12px; }
+.card-cta-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: border-color 0.18s, color 0.18s;
+}
+.card:hover .card-cta-icon { border-color: var(--card-color); color: var(--card-color); }
+
+/* ── DIVIDER ────────────────────────────────── */
+.section-divide {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 36px 0;
+}
+
+/* ── MODAL ───────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(7,9,15,0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s;
+}
+.backdrop.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #111827;
+  border: 1px solid var(--border-mid);
+  border-top: 3px solid var(--modal-color, #fff);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 87vh;
+  overflow-y: auto;
+  transform: scale(0.95) translateY(12px);
+  transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) transparent;
+}
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+.backdrop.open .modal { transform: scale(1) translateY(0); }
+
+.modal-header { padding: 32px 32px 24px; border-bottom: 1px solid var(--border); position: relative; }
+.modal-phase { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; color: var(--modal-color); margin-bottom: 10px; }
+.modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; line-height: 1.1; color: var(--text); letter-spacing: -0.015em; padding-right: 48px; }
+.modal-desc { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
+
+.close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border-mid);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: monospace;
+  line-height: 1;
+  z-index: 10;
+}
+.close-btn:hover { border-color: var(--text-muted); color: var(--text); background: var(--border); }
+
+.modal-body { padding: 28px 32px 36px; }
+.m-section { margin-bottom: 28px; }
+.m-section:last-child { margin-bottom: 0; }
+.m-label { font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; margin-bottom: 14px; }
+.what-block { font-size: 15px; line-height: 1.72; color: var(--text); padding-left: 14px; border-left: 2px solid var(--modal-color); font-style: italic; }
+.m-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 520px) { .sw-grid { grid-template-columns: 1fr; } }
+.sw-col-label { font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; margin-bottom: 12px; }
+.sw-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.sw-list li { font-size: 13px; line-height: 1.5; color: var(--text-muted); padding-left: 18px; position: relative; }
+.sw-list li::before { position: absolute; left: 0; font-weight: 700; font-size: 13px; line-height: 1.5; }
+.strengths li::before { content: '+'; color: #34D399; }
+.weaknesses li::before { content: '−'; color: #F87171; }
+.examples-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.ex-tag { font-size: 12px; padding: 5px 13px; border-radius: 999px; border: 1px solid var(--modal-color); color: var(--modal-color); }
+
+/* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 640px) {
+  body { padding: 40px 20px 64px; }
+  .stage-desc, .trigger-desc-text { display: none; }
+  .card-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .modal-header { padding: 24px 24px 20px; }
+  .modal-body { padding: 24px 24px 32px; }
+  .modal-title { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI Capability<br>SenseMaking</h1>
+  <p style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);font-weight:500;margin-bottom:20px;">v2</p>
+  <div class="block-meta" id="block-meta"></div>
+</header>
+
+<div class="pipeline" id="pipeline"></div>
+
+<hr class="section-divide">
+
+<div class="trigger-wrap" id="trigger-wrap">
+  <div class="trigger-header" onclick="toggleTrigger()">
+    <span class="stage-num">—</span>
+    <span class="trigger-label-text">Trigger mode</span>
+    <span class="trigger-desc-text">How the capability chain is invoked — orthogonal to what it does</span>
+    <div class="stage-meta">
+      <span class="stage-count">4 patterns</span>
+      <div class="trigger-chevron">▾</div>
+    </div>
+  </div>
+  <div class="trigger-panel">
+    <div class="trigger-panel-inner">
+      <div class="trigger-panel-content">
+        <div class="card-grid" id="trigger-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="backdrop" id="backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <p class="modal-phase" id="modal-phase"></p>
+      <h2 class="modal-title" id="modal-title"></h2>
+      <p class="modal-desc" id="modal-desc"></p>
+      <button class="close-btn" onclick="event.stopPropagation(); closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const phases = {
+  input:  { label:'Input',  num:'01', color:'#38BDF8', glow:'rgba(56,189,248,0.15)',  desc:'What AI takes in' },
+  think:  { label:'Think',  num:'02', color:'#FBBF24', glow:'rgba(251,191,36,0.15)',  desc:'How AI understands and reasons' },
+  output: { label:'Output', num:'03', color:'#34D399', glow:'rgba(52,211,153,0.15)',  desc:'What AI produces' },
+  decide: { label:'Decide', num:'04', color:'#F87171', glow:'rgba(248,113,113,0.15)', desc:'What AI does in the world' }
+};
+
+const blocks = [
+  { phase:'input',  name:'Read',              summary:'Text, documents, PDFs, emails',                  what:'AI ingests and processes written text — documents, emails, PDFs, contracts, messages — as its primary input mode.',                                                                                                                        strengths:['Handles document volumes no human team can sustain','Applies consistent interpretation rules across all content','Works continuously without attention degradation'],                                                                                                     weaknesses:['Dependent entirely on source text quality and formatting','Struggles with poorly scanned or handwritten material','Intent and subtext require additional processing blocks to surface'],                                                                                          examples:['Contract review ingestion','Email triage and routing','Knowledge base indexing'] },
+  { phase:'input',  name:'See',               summary:'Images, screenshots, video frames',               what:'AI processes visual information — images, screenshots, diagrams, video frames — extracting structured meaning from inherently unstructured visual data.',                                                                                 strengths:['Processes images at a scale no human team could match','Detects visual patterns and anomalies humans routinely miss','Works on raw, unstructured visual input without preprocessing'],                                                                                         weaknesses:['Accuracy degrades with low-resolution or ambiguous images','Context-blind without accompanying text or metadata','Computationally expensive to run at high volume'],                                                                                                          examples:['Manufacturing defect detection on assembly lines','UI screenshot analysis for QA testing','Medical imaging review support'] },
+  { phase:'input',  name:'Hear',              summary:'Audio, voice, spoken input',                      what:'AI takes in spoken audio or other sound data, converting it into a processable format for downstream analysis and response.',                                                                                                             strengths:['Enables natural voice-driven interfaces and workflows','Processes meetings, calls, and recordings at scale','Accessible input for non-text-native operational contexts'],                                                                                                     weaknesses:['Accuracy drops with strong accents, jargon, or background noise','Latency is a hard constraint in real-time applications','Speaker diarization across multiple voices remains imperfect'],                                                                                     examples:['Call center transcription and analysis','Meeting note-taking and summarization','Voice-commanded operational assistants'] },
+  { phase:'input',  name:'Sense',             summary:'IoT signals, telemetry, physical data',           what:'AI ingests signals from physical environments — sensors, IoT devices, telemetry systems — turning raw environmental data into a processable stream.',                                                                                    strengths:['Enables continuous monitoring impossible for human teams to sustain','Detects slow-moving trends invisible in periodic spot-checks','Captures data no team could manually log at this fidelity'],                                                                             weaknesses:['Requires reliable, well-maintained sensor infrastructure','Prone to data drift as physical conditions change over time','Noisy signals need significant preprocessing before they are useful'],                                                                                examples:['Predictive maintenance on factory equipment','Smart building energy consumption monitoring','Health wearable data analysis and alerting'] },
+  { phase:'input',  name:'Receive',           summary:'Structured data, API feeds, form inputs',        what:'AI takes in structured, machine-readable data — API responses, database records, form submissions, JSON feeds — as clean, typed input.',                                                                                                 strengths:['Clean, consistent input with low error rates vs unstructured sources','Easy to schema-validate and process reliably at scale','Low infrastructure overhead when upstream pipelines are stable'],                                                                               weaknesses:['Entirely dependent on the quality of upstream data sources','Schema changes in the source system can silently break pipelines','No graceful tolerance for missing or malformed fields without explicit fallback logic'],                                                       examples:['CRM contact data ingestion','Financial market data feeds','E-commerce order and inventory processing'] },
+  { phase:'think',  name:'Extract / Parse',   summary:'Pull structure from unstructured content',        what:'AI pulls specific structured information — names, dates, numbers, entities, clauses — from raw or unstructured content, converting noise into usable data.',                                                                             strengths:['Converts high-volume unstructured content into actionable structured data','Dramatically reduces manual data entry and transcription effort','Applies extraction rules consistently across millions of documents'],                                                             weaknesses:['Edge cases and unusual formatting cause extraction failures','Requires domain-specific tuning for specialist or technical content','Confidence levels vary and need threshold management to be useful'],                                                                       examples:['Invoice data extraction for AP automation','Named entity recognition in news and research content','Resume parsing for talent acquisition systems'] },
+  { phase:'think',  name:'Classify / Label',  summary:'Assign to categories or tags',                   what:'AI assigns inputs to predefined categories or tags, making content sortable, routable, and actionable at scale without human triage.',                                                                                                   strengths:['Operates at speeds and volumes no human team can replicate','Produces consistent labeling free from individual variation or fatigue','Works across text, image, and audio modalities with the same approach'],                                                               weaknesses:['Struggles meaningfully with ambiguous or multi-label inputs','Only as good as the quality and coverage of the category definitions','Requires high-quality labeled training data to perform reliably from the start'],                                                         examples:['Routing customer emails to the right support queue','Content moderation at platform scale','Sentiment and intent tagging of product reviews'] },
+  { phase:'think',  name:'Compare / Match',   summary:'Find similarity, reconcile, deduplicate',        what:'AI assesses similarity or difference between items — documents, records, images — to identify duplicates, conflicts, or meaningful relationships at scale.',                                                                              strengths:['Catches discrepancies and duplicates human reviewers routinely miss','Operates across datasets far too large for manual cross-referencing','Enables systematic comparison between disparate sources'],                                                                          weaknesses:['Similarity thresholds are genuinely difficult to calibrate for each context','Fuzzy matching generates false positives that still require human review','Computationally expensive at very large scale without optimized indexing'],                                          examples:['Duplicate customer record detection in CRM','Contract clause comparison against standard terms','Product catalog deduplication across supplier feeds'] },
+  { phase:'think',  name:'Search / Retrieve', summary:'Find relevant content from a corpus',             what:'AI finds relevant information from a knowledge base or document corpus using semantic or vector-based search, surfacing meaning rather than keyword matches.',                                                                            strengths:['Surfaces relevance and meaning rather than just surface keyword presence','Scales effectively to large, heterogeneous document collections','Enables grounded AI responses that cite real organizational knowledge (RAG)'],                                                     weaknesses:['Quality depends entirely on the freshness and coverage of the underlying corpus','Retrieved content may be outdated if the corpus is not actively maintained','Retrieval failures are silent — the model may proceed confidently on missing context'],                          examples:['Enterprise knowledge base Q&A','Legal document discovery and case research','Internal HR policy and procedure lookup'] },
+  { phase:'think',  name:'Summarize / Compress', summary:'Distill to key points',                       what:'AI condenses long or complex content into shorter, more digestible form while preserving key meaning — adapting to different target lengths and audience levels.',                                                                          strengths:['Massive time savings across high-volume long-form document workflows','Consistent output quality applied at scale without quality drift','Adapts to different target lengths and audience sophistication levels'],                                                              weaknesses:['May omit nuance or edge-case detail that turns out to be critical','Hallucination risk increases when compressing highly technical or specialist content','Style and emphasis choices reflect model defaults, not always the author\'s intent'],                              examples:['Earnings call and board meeting summaries','Research paper abstract generation','Post-meeting action item extraction'] },
+  { phase:'think',  name:'Detect / Flag',     summary:'Spot anomalies, risks, or patterns',             what:'AI identifies anomalies, risks, policy violations, or specific patterns of concern within datasets, documents, or event streams — before humans would catch them.',                                                                       strengths:['Catches what fatigued or overwhelmed human reviewers routinely miss','Operates at scale and in real time without quality degradation','Consistent vigilance applied across the full dataset with no blind spots'],                                                            weaknesses:['High false positive rates if detection thresholds are poorly calibrated','Requires quality ground truth data to calibrate detection correctly','Adversarial actors learn over time to craft inputs that evade detection'],                                                     examples:['Fraud transaction detection in payment systems','Compliance violation flagging in recorded communications','Quality control anomaly detection in manufacturing'] },
+  { phase:'think',  name:'Translate / Convert', summary:'Language, format, or schema conversion',       what:'AI transforms content from one language, format, or data schema into another — preserving meaning while adapting structure to a new target context.',                                                                                     strengths:['Delivers instant multilingual capability across content types and volumes','Handles large-scale format conversion reliably and consistently','Structural transformation applied uniformly at scale'],                                                                           weaknesses:['Loses culturally specific nuance in complex or idiomatic content','Schema mapping requires careful design and ongoing human validation','Technical or domain-specific translations can introduce subtle but consequential errors'],                                          examples:['Legal document localization across markets','API response format conversion between systems','Code language and framework translation'] },
+  { phase:'think',  name:'Score / Rank',      summary:'Order by relevance, priority, or probability',   what:'AI assigns a numerical score or ordered ranking to items based on defined criteria or learned patterns — making priority explicit, consistent, and actionable.',                                                                          strengths:['Makes priority explicit and removes subjective individual judgment from ranking','Operates at volumes that would overwhelm human-led ranking processes','Enables threshold-based downstream automation based on score outputs'],                                                weaknesses:['Scoring models encode the biases present in their training data','Score rationale is often difficult to explain to non-technical stakeholders','Overconfidence in borderline cases near threshold boundaries is a consistent failure mode'],                                examples:['Lead scoring in CRM and sales pipelines','Job candidate ranking in high-volume recruitment','Content relevance ranking in enterprise search'] },
+  { phase:'think',  name:'Predict / Forecast', summary:'Estimate future states or outcomes',            what:'AI estimates what is likely to happen in the future based on historical patterns, current signals, and learned relationships between predictor variables.',                                                                               strengths:['Processes far more predictor variables simultaneously than human analysts','Applies a consistent methodology across all cases without fatigue or bias','Outputs quantified uncertainty alongside point estimates — not just a single answer'],                                weaknesses:['Predictions degrade when real-world conditions shift from the training distribution','Past patterns do not guarantee future results — this is consistently undersold to clients','Communicating probabilistic confidence to non-technical stakeholders remains hard'],        examples:['Customer churn prediction for proactive retention','Demand forecasting for inventory and supply chain planning','Appointment no-show prediction for scheduling optimization'] },
+  { phase:'think',  name:'Reason',            summary:'Apply logic, weigh evidence, form an argument',  what:'AI applies structured logic, weighs available evidence, and constructs explicit inference chains — moving from premises to conclusions through deliberate, reviewable reasoning steps.',                                                   strengths:['Handles multi-step problems requiring simultaneous consideration of many variables','Can surface its reasoning transparently when prompted, enabling human review','Generalizes across domains without requiring domain-specific retraining'],                                 weaknesses:['Can generate plausible-sounding but logically flawed argument chains','Reasoning quality degrades on very long or deeply nested inference chains','Not yet reliably safe for high-stakes autonomous decisions without human oversight in the loop'],                       examples:['Legal argument construction and case analysis','Root cause analysis in complex incident reports','Multi-step medical diagnosis support for clinical teams'] },
+  { phase:'think',  name:'Decide / Recommend', summary:'Select from options, advise on action',         what:'AI selects from a defined set of options and outputs a recommendation or decision — grounded in prior analysis and explicit or implicit criteria.',                                                                                       strengths:['Delivers consistent, auditable decisions at high volume','Eliminates analysis paralysis in repeated, high-stakes decision contexts','Decision criteria can be made explicit, reviewed, and updated over time'],                                                              weaknesses:['Difficult to override gracefully without disrupting the wider workflow','Defining the right criteria is a human responsibility the AI cannot substitute for','Recommendations without accessible explanations rapidly erode user and stakeholder trust'],                  examples:['Next-best-action recommendations in customer service','Investment portfolio rebalancing suggestions','Clinical treatment pathway recommendations for care teams'] },
+  { phase:'think',  name:'Plan / Decompose',  summary:'Break a goal into steps',                        what:'AI breaks a high-level goal into a structured sequence of subtasks — creating an explicit, auditable plan that other blocks will execute in an agentic workflow.',                                                                         strengths:['Makes complex, ambiguous goals tractable by creating explicit task structures','Enables parallel execution of independent subtasks, compressing cycle time','Produces an auditable plan humans can inspect and modify before any execution begins'],                         weaknesses:['Plans become brittle when real-world conditions diverge from initial assumptions','Decomposition quality is directly constrained by the clarity of the original goal','Requires robust re-planning capability when individual steps fail mid-execution'],                    examples:['Automated project plan generation from a brief','Research agent task decomposition into search, synthesis, and review steps','Multi-step customer onboarding workflow orchestration'] },
+  { phase:'output', name:'Write / Draft',     summary:'Text, reports, code, narratives',                what:'AI produces original written content — text, narratives, structured reports, or functional code — from a prompt, context, or set of source materials.',                                                                                   strengths:['Eliminates blank-page paralysis and accelerates first-draft production','Works consistently across formats, tones, and technical complexity levels','Maintains quality across high volumes without fatigue-driven degradation'],                                              weaknesses:['Output always requires human review — confident incorrectness is a real risk','Stylistic consistency across long or multi-author documents is imperfect','Model defaults in tone and emphasis may not match brand or house style without explicit guidance'],              examples:['Proposal and tender response drafting','Code generation from requirements or pseudocode','Technical documentation generated from engineering notes'] },
+  { phase:'output', name:'Speak / Respond',   summary:'Voice output, conversational replies',           what:'AI generates spoken or conversational output — voice responses, chatbot replies, real-time verbal interaction — as the primary interface between system and user.',                                                                        strengths:['Enables natural, accessible interfaces for users who prefer conversation over forms','Available continuously with the ability to handle high concurrency without degradation','Consistent tone and availability regardless of demand volume or time of day'],                weaknesses:['Naturalness degrades in emotionally sensitive or highly complex conversations','Latency is a hard constraint in real-time voice applications','Voice quality and naturalness vary significantly across TTS models and languages'],                                          examples:['IVR customer service for high-volume inbound contact','Voice assistant interfaces for operational and field applications','Conversational AI support agents across digital channels'] },
+  { phase:'output', name:'Create / Synthesize', summary:'Images, media, structured artifacts',          what:'AI generates novel artifacts — images, audio, video, synthetic datasets, or composite creative outputs — that did not exist prior to the request.',                                                                                       strengths:['Produces creative and synthetic outputs at a scale impossible for human creative teams','Enables rapid, low-cost prototyping of visual and media concepts','Democratizes content creation for teams without dedicated creative resources'],                                weaknesses:['IP and copyright exposure remains a live and evolving legal question','Output quality and brand consistency are harder to control than text outputs','Auditing for brand safety requires systematic review processes, not spot-checks'],                                   examples:['Product image generation for e-commerce catalogues at scale','Synthetic training data generation for model development','AI-assisted design concepts for early-stage campaign ideation'] },
+  { phase:'output', name:'Transform / Reformat', summary:'Restructure or convert existing content',     what:'AI takes existing content and restructures it — changing format, tone, length, or medium — without generating from scratch.',                                                                                                              strengths:['Preserves original meaning while adapting structure to a new context','More reliable and less prone to hallucination than pure generation from a prompt','Fast turnaround on high-volume transformation tasks with consistent quality'],                                  weaknesses:['Structural assumptions baked into the target format may not fit the source material','Complex multi-step transformation chains accumulate small errors at each step','Quality validation is still required — automation does not eliminate the need for review'],          examples:['Converting research reports into executive-ready slide decks','Reformatting database exports into structured JSON for API consumption','Tone-shifting customer communications for different audience segments'] },
+  { phase:'output', name:'Personalize / Adapt', summary:'Tailor output to a specific user or context',  what:'AI tailors output to a specific user, audience segment, or context — adjusting content, tone, depth, or emphasis based on known attributes or real-time signals.',                                                                        strengths:['Scales personalization that would be impossible to deliver manually at volume','Measurably improves engagement, relevance, and conversion in content-driven workflows','Adapts in real time to user context without requiring manual segmentation work'],                 weaknesses:['Requires high-quality, maintained user data to personalize meaningfully','Can feel intrusive or manipulative if personalization signals are visible or unexpected','Filter bubble risk in recommendation systems that over-optimize for engagement signals'],            examples:['Personalized email campaign content by user segment or behavior','Adaptive learning content adjusted to individual progress and knowledge gaps','Tailored product recommendations in e-commerce and retail'] },
+  { phase:'decide', name:'Execute',           summary:'Take actions in systems — clicks, API calls, file ops', what:'AI takes direct action within a system — clicking, submitting forms, calling APIs, modifying files, triggering processes — without human intervention at each step.',                                                         strengths:['Eliminates repetitive manual tasks entirely from human workloads','Operates at machine speed with consistent, reliable execution every time','Zero variability in how the action is performed across millions of instances'],                                              weaknesses:['Mistakes are difficult or impossible to reverse once executed downstream','Requires careful, explicit permission scoping to limit the blast radius of errors','A wrong action in the wrong context propagates consequences through connected systems'],                    examples:['Automated invoice processing and payment execution','RPA-style form completion across legacy enterprise systems','Automated code deployment pipeline triggering from merged pull requests'] },
+  { phase:'decide', name:'Orchestrate',       summary:'Coordinate multiple agents or tool calls',        what:'AI coordinates multiple agents, tools, or processes — delegating tasks, managing sequencing, and handling dependencies across a complex multi-step workflow.',                                                                            strengths:['Enables complex multi-step automation that would require significant human coordination','Can parallelize independent workstreams, compressing overall end-to-end cycle time','Creates an auditable dependency map across the full workflow for review and debugging'],      weaknesses:['Failure in a single agent or node can cascade unpredictably through the whole system','Coordination overhead and complexity grow non-linearly with the number of agents involved','Debugging failures in multi-agent systems is significantly harder than in single-agent flows'], examples:['Multi-agent research pipelines combining search, synthesis, and structured review','AI-managed software delivery across build, test, and deploy stages','Complex customer journey automation spanning multiple platforms and channels'] },
+  { phase:'decide', name:'Notify / Alert',    summary:'Push information to people or systems',           what:'AI proactively pushes relevant information to the right people or systems at the right time — triggered by events, threshold breaches, or defined conditions.',                                                                           strengths:['Closes the loop between insight and human action without manual monitoring','Reduces time-to-response in time-sensitive operational and risk contexts','Highly automatable at scale across thousands of concurrent monitored streams'],                                     weaknesses:['Alert fatigue is a chronic risk if notification thresholds are poorly set or maintained','Channel selection requires deliberate, maintained routing logic that becomes technical debt','Routing rules must evolve as the organization and its systems change over time'],     examples:['Escalation alerts for breached SLAs in customer support platforms','Anomaly detection alerts for financial or operational metric thresholds','Risk and compliance breach notifications in service management systems'] },
+  { phase:'decide', name:'Remember / Recall', summary:'Maintain and retrieve context across sessions',  what:'AI maintains context across sessions or extended interactions — storing relevant information and retrieving it accurately to meaningfully inform future responses.',                                                                        strengths:['Enables genuinely continuous AI experiences without repetitive context-setting','Eliminates friction of re-explaining preferences, history, or prior decisions','Powers personalization that compounds in value over time rather than resetting each session'],             weaknesses:['Memory retrieval quality degrades as the volume of stored context grows','Privacy and consent implications require explicit governance frameworks','Stale or incorrect memories can actively mislead the model in future interactions'],                                     examples:['Customer service agents that recall prior interactions and stated preferences','AI assistants that maintain full project context across long, complex engagements','CRM systems enriched with recalled conversation history from prior touchpoints'] },
+  { phase:'decide', name:'Learn / Improve',   summary:'Update behavior from feedback or new data',       what:'AI updates its behavior or output quality based on feedback signals, new data, or observed outcomes — closing the loop between performance and ongoing improvement.',                                                                     strengths:['Improves measurably over time without requiring full, costly manual retraining cycles','Adapts to gradual drift in patterns or user behavior that would otherwise degrade performance','Makes AI investment compound in value rather than depreciate toward obsolescence'], weaknesses:['Requires careful feedback loop design to avoid reinforcing incorrect or biased behavior','Adapts slowly to sudden, discontinuous changes in conditions or ground truth','Infrastructure complexity and governance overhead are meaningfully higher than static models'],     examples:['Recommendation systems continuously tuned by click-through and engagement signals','Conversational AI improved through RLHF from human preference ratings over time','Adaptive fraud detection models updated from confirmed fraud and non-fraud signal feedback'] }
+];
+
+const triggers = [
+  { name:'On-demand',    summary:'Fires once on an explicit request',                  what:'The chain is invoked by a direct user action or API call — a button click, a form submission, a direct query. It runs, returns a result, and stops. The simplest and most predictable trigger pattern.', strengths:['Simple to reason about, test, and cost-control','Only runs when explicitly called — no idle compute','Easy to audit: one input, one output, one moment in time'], weaknesses:['Reactive by nature — can only respond to what is asked, not what is happening','Requires a human or upstream system to initiate every run','Misses anything that occurs between requests'], examples:['Document analysis tool','Chat interface','On-request report generation'] },
+  { name:'Scheduled',    summary:'Runs at defined intervals regardless of change',     what:'The chain fires automatically at defined intervals — hourly, nightly, weekly — independent of whether conditions have actually changed. Classic batch processing pattern.', strengths:['Predictable cost, timing, and resource allocation','No event infrastructure required — simple to operate','Easy to audit with a clear, time-stamped execution history'], weaknesses:['Latency between when something happens and when it is caught','Wasteful if conditions have not changed since the last run','Will miss fast-moving events that occur and resolve between runs'], examples:['Nightly data sync and enrichment','Weekly compliance report generation','Batch document processing pipelines'] },
+  { name:'Streaming',    summary:'Continuously ingests and reacts in near real-time',  what:'The chain runs continuously against an ongoing data stream, processing or triggering on defined conditions as they occur rather than waiting for a request or schedule.', strengths:['Lowest latency — catches events as they happen','Scales to high-volume, high-velocity data streams','Enables proactive intervention before issues compound'], weaknesses:['Significantly higher infrastructure cost and complexity','Requires careful calibration of thresholds to avoid alert fatigue','Much harder to debug and replay than discrete request patterns'], examples:['Fraud detection on payment streams','Live call transcription and analysis','Security threat monitoring in SIEM systems'] },
+  { name:'Event-driven', summary:'Fires in response to a discrete system event',       what:'The chain is triggered by a specific, discrete event in a connected system — a file upload, a status change, a webhook, a new record. Efficient and decoupled from the triggering source.', strengths:['Only runs when something actually happens — no idle cost','Decoupled from the triggering system; easy to extend to new sources','Scales naturally as event volume grows without architectural changes'], weaknesses:['Depends on reliable event infrastructure — missed events are hard to detect','Event ordering and delivery guarantees can be complex to manage','Debugging requires tracing across the triggering system and the AI chain'], examples:['Document processing triggered on upload','CRM enrichment on new lead creation','Escalation chain triggered on ticket status change'] }
+];
+
+// ── META ──────────────────────────────────────
+function buildMeta() {
+  const el = document.getElementById('block-meta');
+  Object.entries(phases).forEach(([id, p]) => {
+    const count = blocks.filter(b => b.phase === id).length;
+    el.innerHTML += `<span class="meta-pill"><span class="meta-dot" style="background:${p.color}"></span>${count} ${p.label}</span>`;
+  });
+}
+
+// ── CARD HTML ─────────────────────────────────
+function makeCard(item, color, glow, phaseName, delay, clickFn) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.setProperty('--card-color', color);
+  card.style.setProperty('--card-glow', glow);
+  card.style.animationDelay = `${delay}s`;
+  card.innerHTML = `
+    <p class="card-phase">${phaseName}</p>
+    <p class="card-name">${item.name}</p>
+    <p class="card-summary">${item.summary}</p>
+    <div class="card-cta"><span class="card-cta-icon">↗</span></div>
+  `;
+  card.onclick = clickFn;
+  return card;
+}
+
+// ── PIPELINE ACCORDION ────────────────────────
+function buildPipeline() {
+  const container = document.getElementById('pipeline');
+  Object.entries(phases).forEach(([id, p]) => {
+    const phaseBlocks = blocks.filter(b => b.phase === id);
+
+    const stage = document.createElement('div');
+    stage.className = 'stage';
+    stage.id = `stage-${id}`;
+    stage.style.setProperty('--stage-color', p.color);
+    stage.style.setProperty('--stage-glow', p.glow);
+
+    stage.innerHTML = `
+      <div class="stage-header" onclick="toggleStage('${id}')">
+        <span class="stage-num">${p.num}</span>
+        <span class="stage-name">${p.label}</span>
+        <span class="stage-desc">${p.desc}</span>
+        <div class="stage-meta">
+          <span class="stage-count">${phaseBlocks.length} blocks</span>
+          <div class="stage-chevron">▾</div>
+        </div>
+      </div>
+      <div class="stage-panel">
+        <div class="stage-panel-inner">
+          <div class="stage-panel-content">
+            <div class="card-grid" id="grid-${id}"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(stage);
+
+    // populate cards after DOM is ready
+    setTimeout(() => {
+      const grid = document.getElementById(`grid-${id}`);
+      phaseBlocks.forEach((block, i) => {
+        grid.appendChild(makeCard(block, p.color, p.glow, p.label, i * 0.04, () => openModal(block, p)));
+      });
+    }, 0);
+  });
+}
+
+function toggleStage(id) {
+  const stage = document.getElementById(`stage-${id}`);
+  stage.classList.toggle('open');
+}
+
+// ── TRIGGER ACCORDION ─────────────────────────
+function buildTriggers() {
+  const grid = document.getElementById('trigger-grid');
+  triggers.forEach((t, i) => {
+    grid.appendChild(makeCard(t, '#A78BFA', 'rgba(167,139,250,0.15)', 'Trigger mode', i * 0.05, () => openTriggerModal(t)));
+  });
+}
+
+function toggleTrigger() {
+  document.getElementById('trigger-wrap').classList.toggle('open');
+}
+
+// ── MODAL ─────────────────────────────────────
+function modalBody(item) {
+  return `
+    <div class="m-section">
+      <p class="m-label">What it means</p>
+      <p class="what-block">${item.what}</p>
+    </div>
+    <hr class="m-divider">
+    <div class="m-section">
+      <div class="sw-grid">
+        <div class="sw-col">
+          <p class="sw-col-label">Strengths</p>
+          <ul class="sw-list strengths">${item.strengths.map(s=>`<li>${s}</li>`).join('')}</ul>
+        </div>
+        <div class="sw-col">
+          <p class="sw-col-label">Weaknesses</p>
+          <ul class="sw-list weaknesses">${item.weaknesses.map(w=>`<li>${w}</li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>
+    <hr class="m-divider">
+    <div class="m-section">
+      <p class="m-label">Possible use cases</p>
+      <div class="examples-wrap">${item.examples.map(e=>`<span class="ex-tag">${e}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+function openModal(block, p) {
+  const modal = document.getElementById('modal');
+  modal.style.setProperty('--modal-color', p.color);
+  document.getElementById('modal-phase').textContent = p.label;
+  document.getElementById('modal-title').textContent = block.name;
+  document.getElementById('modal-desc').textContent = block.summary;
+  document.getElementById('modal-body').innerHTML = modalBody(block);
+  modal.scrollTop = 0;
+  document.getElementById('backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openTriggerModal(t) {
+  const modal = document.getElementById('modal');
+  modal.style.setProperty('--modal-color', '#A78BFA');
+  document.getElementById('modal-phase').textContent = 'Trigger mode';
+  document.getElementById('modal-title').textContent = t.name;
+  document.getElementById('modal-desc').textContent = t.summary;
+  document.getElementById('modal-body').innerHTML = modalBody(t);
+  modal.scrollTop = 0;
+  document.getElementById('backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('backdrop')) closeModal();
+}
+function closeModal() {
+  document.getElementById('backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+buildMeta();
+buildPipeline();
+buildTriggers();
+</script>
+</body>
+</html>
